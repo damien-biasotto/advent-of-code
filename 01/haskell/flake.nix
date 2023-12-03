@@ -10,11 +10,29 @@
         pkgs = import nixpkgs { inherit system; };
       });
     in
-    {
-      devShells = forEachSupportedSystem ({ pkgs }: {
+      {
+	devShells = forEachSupportedSystem ({ pkgs }: let
+	  myGhc = (pkgs.ghc.withPackages(hpkgs: with hpkgs; [haskell-language-server HUnit ghci]));
+	  in {
         default = pkgs.mkShell {
-          packages = with pkgs; [ cabal-install (ghc.withPackages(hpkgs: with hpkgs; [haskell-language-server HUnit])) ];
+          packages = with pkgs; [ cabal-install myGhc ];
         };
+
+	INPUT_FILE = "/Users/damienbiasotto/Code/Perso/AoC/2023/01/fixture.txt";
+
+	
+	shellHook = let
+	  dir-locals = pkgs.writeTextFile {
+	    name = ".dir-locals.el";
+	    text = ''
+            (
+  (haskell-ts-mode . ((eglot-workspace-configuration . (:haskell-language-server (:command "${myGhc}/bin/haskell-language-server-wrapper --lsp")))))
+)
+            '';
+	  };
+	in
+	''
+	'';
       });
     };
 }
