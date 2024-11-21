@@ -9,23 +9,23 @@
   outputs = { self, nixpkgs, utils }: utils.lib.eachDefaultSystem (system:
     let
       overlay = pkgsNew: pkgsOld: {
-	aoc = pkgsNew.haskell.lib.justStaticExecutables pkgsNew.haskellPackages.aoc;
+	advent-of-code = pkgsNew.haskell.lib.justStaticExecutables pkgsNew.haskellPackages.advent-of-code;
 	haskellPackages = pkgsOld.haskellPackages.override (old: {
 	  overrides = pkgsNew.haskell.lib.packageSourceOverrides {
-	    aoc = ./.;
+	    advent-of-code = ./.;
 	  };
 	});
       };
       pkgs = import nixpkgs { inherit system; overlays = [ overlay ]; config.allowBroken = true; };
     in
       rec {
-	packages.default = pkgs.haskellPackages.aoc;
+	packages.default = pkgs.haskellPackages.advent-of-code;
 	apps.default = {
 	  type = "app";
-	  program = "${pkgs.lib.getExe pkgs.aoc}";
+	  program = "${pkgs.lib.getExe pkgs.advent-of-code}";
 	};
 	
-	devShells.default = pkgs.haskellPackages.aoc.env;
+	devShells.default = pkgs.haskellPackages.advent-of-code.env;
       }
   );
 }
