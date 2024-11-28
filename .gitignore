@@ -1,2 +1,5 @@
 .env.local
 puzzles
+/haskell/.direnv/
+/.pre-commit-config.yaml
+haskell/dist-newstyle

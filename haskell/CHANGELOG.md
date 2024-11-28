@@ -1,4 +1,4 @@
-# Revision history for aoc
+# Revision history for advent-of-code
 
 ## 0.1.0.0 -- YYYY-mm-dd
 
