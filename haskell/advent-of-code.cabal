@@ -84,6 +84,7 @@ library year2015-lib
     Day02
     Day03
     Day04
+    Day05
 
   build-depends:   advent-of-code:common-lib
 
