@@ -88,6 +88,21 @@ library year2015-lib
 
   build-depends:   advent-of-code:common-lib
 
+library year2024-lib
+  import:          shared-properties
+  hs-source-dirs:  src/Year/2024
+  exposed-modules:
+    Day01
+
+  build-depends:   advent-of-code:common-lib
+
+executable year2024
+  import:         shared-properties
+  hs-source-dirs: app/Year/2024
+  main-is:        Main.hs
+  build-depends:  advent-of-code:common-lib
+                , advent-of-code:year2024-lib
+
 executable year2015
   import:         shared-properties
   hs-source-dirs: app/Year/2015
