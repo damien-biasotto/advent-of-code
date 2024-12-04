@@ -93,7 +93,8 @@ library year2024-lib
   hs-source-dirs:  src/Year/2024
   exposed-modules:
     Day01
-    , Day02
+    Day02
+    Day03
 
   build-depends:   advent-of-code:common-lib
 
