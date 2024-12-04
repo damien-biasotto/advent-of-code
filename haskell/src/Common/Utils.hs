@@ -1,8 +1,7 @@
 {-# Language OverloadedStrings  #-}
-module Utils where
+module Utils (getPuzzleInput, toInt, deleteElemAt, toPairs) where
 
 import Data.Text (Text)
-import Data.Either (Either(..))
 
 import qualified Data.ByteString.Char8 as ByteString
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
@@ -12,8 +11,6 @@ import qualified Data.List.Split as List
 
 import qualified Data.Text as Text
 import qualified Data.Text.Encoding as Text
-import qualified Data.Text.Lazy as LazyText
-import qualified Data.Text.Lazy.Encoding as LazyText
 import qualified Data.Text.IO as Text
 
 import qualified Network.HTTP.Client as HttpClient
@@ -120,3 +117,14 @@ hasSessionId cookies = List.any (\(k,_) -> k == "session") cookies
 formatCookies :: [CookiePair] -> ByteString.ByteString
 formatCookies cookies = ByteString.pack $ List.intercalate "; " 
     [key ++ "=" ++ value | (key, value) <- cookies]
+
+toInt :: forall a . (Num a, Read a) => Text -> a
+toInt = fromInteger . read . Text.unpack 
+
+deleteElemAt :: forall a . Int -> [a] -> [a]
+deleteElemAt _ [] = []
+deleteElemAt 0 (_x : xs) = xs
+deleteElemAt n xs = take n xs ++ drop (n + 1) xs
+
+toPairs :: forall a. [a] -> [(a, a)]
+toPairs xs = zip xs $ tail xs

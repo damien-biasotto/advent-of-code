@@ -1,11 +1,10 @@
 module Day01 where
 
-import Data.Text (Text)
-import Utils (getPuzzleInput)
+import Prelude hiding (lines, words)
 
-import qualified Data.Tuple as Tuple
-import qualified Data.List as List
-import qualified Data.Text as Text
+import Data.List (sort, findIndices)
+import Data.Text (Text, unpack, lines, words)
+import Utils (getPuzzleInput)
 
 toInt :: String -> Int
 toInt i = read i :: Int
@@ -18,34 +17,29 @@ mapTuple :: forall a b . (a -> b) -> (a,a) -> (b,b)
 mapTuple f (a,b) = (f a, f b)
 
 sortTuple :: ([Int], [Int]) -> ([Int], [Int])
-sortTuple = mapTuple List.sort
+sortTuple = mapTuple sort
 
 getDistance :: forall a . Num a => (a, a) -> a
-getDistance = abs . Tuple.uncurry (-) 
+getDistance = abs . uncurry (-) 
 
 getSimilarityScore :: [Int] -> Int -> Int
-getSimilarityScore xs x = x * (List.length $ List.findIndices (== x) xs)
+getSimilarityScore xs x = x * (length $ findIndices (== x) xs)
 
 prepareInput :: Text -> [(Int,Int)]
 prepareInput text =
-  let
-    lines :: [Text] = Text.lines text
-    words :: [[Text]] = List.map Text.words lines
-    ints :: [[Int]] = List.map (List.map (toInt . Text.unpack)) words
-  in
-    List.map toTuple ints
+    map toTuple $ map (map (toInt . unpack)) $ map words $ lines text
 
 part1 :: Text -> Int
 part1 text =  let
-  sortedTuple :: [(Int, Int)] = Tuple.uncurry List.zip $ sortTuple (List.unzip $ prepareInput text)
+  sortedTuple :: [(Int, Int)] = uncurry zip $ sortTuple (unzip $ prepareInput text)
   in
-  List.sum $ List.map getDistance sortedTuple
+  sum $ map getDistance sortedTuple
 
 part2 :: Text -> Int
 part2 text = let
-    tuples :: ([Int],[Int]) = List.unzip $ prepareInput text
+    tuples :: ([Int],[Int]) = unzip $ prepareInput text
   in
-  List.sum $ List.map (getSimilarityScore $ Tuple.snd tuples) (Tuple.fst tuples)  
+  sum $ map (getSimilarityScore $ snd tuples) (fst tuples)  
   
 solve :: IO ()
 solve =  do
