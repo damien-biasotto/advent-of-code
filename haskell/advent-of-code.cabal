@@ -70,6 +70,7 @@ common shared-properties
     , http-types
     , split
     , text
+    , megaparsec
 
 library common-lib
   import:          shared-properties
