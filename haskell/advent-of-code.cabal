@@ -96,6 +96,7 @@ library year2024-lib
     Day01
     Day02
     Day03
+    Day04
 
   build-depends:   advent-of-code:common-lib
 

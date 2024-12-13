@@ -34,7 +34,7 @@
 	  ];
 
 	  shellHook = ''
-	    gen-hie > hie.yaml
+	  gen-hie > hie.yaml
 	  '';
 	};
       }
