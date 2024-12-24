@@ -54,6 +54,7 @@ extra-doc-files: CHANGELOG.md
 common shared-properties
   default-language: GHC2024
   ghc-options:
+    -O2
     -Wall -Wcompat -Widentities -Wincomplete-record-updates
     -Wincomplete-uni-patterns -Wmissing-export-lists
     -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
@@ -61,6 +62,8 @@ common shared-properties
   build-depends:
     , base             ^>=4.20.0.0
     , bytestring
+    , hashable
+    , unordered-containers  
     , containers
     , cookie
     , cryptohash-md5
@@ -98,6 +101,7 @@ library year2024-lib
     Day03
     Day04
     Day05
+    Day06
 
   build-depends:   advent-of-code:common-lib
 
