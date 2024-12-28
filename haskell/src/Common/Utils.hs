@@ -2,6 +2,9 @@
 module Utils (getPuzzleInput, toInt, deleteElemAt, toPairs) where
 
 import Data.Text (Text)
+import GHC.Generics
+
+import qualified Data.Array.Unboxed as Array
 
 import qualified Data.ByteString.Char8 as ByteString
 import qualified Data.ByteString.Lazy.Char8 as LazyByteString
@@ -26,6 +29,8 @@ newtype Day = Day Int deriving Show
 
 type CookiePair = (String, String)
 
+data Coord = C !Int !Int
+  deriving (Read, Show, Ord, Eq, Generic)
 
 mkPuzzleFolderPath :: Year -> IO String
 mkPuzzleFolderPath (Year year) = do

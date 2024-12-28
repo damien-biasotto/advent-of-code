@@ -1,3 +1,4 @@
+{-# Language DerivingStrategies #-}
 {-# Language OverloadedStrings #-}
 module Day03 where
 
@@ -5,6 +6,7 @@ import Prelude hiding (lines, words)
 
 import Data.Either (fromRight)
 import Data.Functor (($>))
+import Data.List (foldl')
 import Data.Maybe (catMaybes)
 import Data.Text (Text, pack)
 import Data.Void (Void)

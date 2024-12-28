@@ -4,7 +4,7 @@ module Day05 where
 import Prelude hiding (words, elem)
 import Control.Monad (void)
 import Data.Function (on)
-import Data.List (nub, elemIndex, sortBy, elem)
+import Data.List (nub, elemIndex, sortBy, elem, foldl')
 import Data.Map.Strict (Map, (!))
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.Text (Text)
