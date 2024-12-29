@@ -60,7 +60,8 @@ common shared-properties
     -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
 
   build-depends:
-    , base
+    base
+    , async
     , bytestring
     , hashable
     , array

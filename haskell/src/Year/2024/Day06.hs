@@ -3,38 +3,26 @@ module Day06 where
 
 import Prelude
 
-import Control.Monad (void)
-import Data.Char
+import Control.Concurrent.Async 
+import Data.Array (Array, (//), (!))
+import Data.Bifunctor (bimap)
 import Data.Either(partitionEithers)
-import Data.List (nub)
-import Data.Maybe (catMaybes)
+import Data.Set (Set)
 import Data.Text (Text)
-import Data.Void (Void)
 
 import GHC.Generics
-import Text.Megaparsec
-import Text.Megaparsec.Char
 
-
+import qualified Data.Array as Array
+import qualified Data.Set as Set
 import qualified Data.Text as Text
-import qualified Text.Megaparsec.Char.Lexer as Lexer
+import qualified Utils 
 
-data Direction = North | South | West | East  deriving (Show, Eq, Generic)
-data Guard = Guard { coords :: Coord
-                   , direction :: Direction
-                   } deriving (Show, Eq, Generic)
-
-newtype XCoord = XCoord Int deriving (Show, Eq, Generic)
-newtype YCoord = YCoord Int deriving (Show, Eq, Generic)
-newtype Coord = Coord (XCoord, YCoord) deriving (Show, Eq, Generic)
-
-newtype Obstacle = Obstacle Coord deriving (Show, Eq, Generic)
-
-data Input = Input { guard ::  Guard
-                   , obstacles :: [Obstacle]
-                   } deriving (Show)
-
-type Parser = Parsec Void Text
+type Coord = (Int, Int)
+type Grid = Array Coord Cell
+data Direction = North | East | South | West  deriving (Show, Eq, Generic, Enum, Ord)
+data Cell = Empty | Obstacle deriving (Show, Eq)
+data Guard = Guard Coord Direction deriving (Show, Eq, Ord)
+type Route = Set Guard 
 
 sample :: Text
 sample = Text.unlines
@@ -50,127 +38,78 @@ sample = Text.unlines
          , "......#..."
          ]
 
-lexeme :: Parser a -> Parser a
-lexeme = Lexer.lexeme  spaceConsumer
+turn :: Guard -> Guard
+turn (Guard coordinates West) = Guard coordinates North
+turn (Guard coordinates direction) = Guard coordinates $ succ direction
 
-spaceConsumer :: Parser ()
-spaceConsumer = Lexer.space filler empty empty
+parseDirection :: Char -> Direction
+parseDirection '^' = North
+parseDirection '>' = East
+parseDirection 'v' = South
+parseDirection '<' = West
+parseDirection _ = error "Unknown direction"
 
-isSep :: Char -> Bool
-isSep x = isSpace x || isPunctuation x
+parseCell :: Char -> Either Cell Direction
+parseCell '#' = Left Obstacle
+parseCell '.' = Left Empty
+parseCell c
+  | c `elem` (Text.unpack "^v<>") = Right $ parseDirection c
+  | otherwise = Left Empty
 
-filler :: Parser ()
-filler = void $ some $ satisfy isSep
+parseInput :: Text -> (Grid, Guard)
+parseInput input
+  | null guards = error "No guard detected"
+  | length guards > 1 = error "Multiple guards detected"
+  | otherwise = (grid, guard) where
+      rows = lines $ Text.unpack input
+      bounds = ((0,0), (length rows - 1, length (head rows) - 1))
+      (cells, guards) = partitionEithers [ bimap ((i,j),) ((i,j),) $ parseCell x | (xs,j) <- zip rows [0..], (x, i) <- zip xs [0..] ]
+      guard@(Guard coordinates _) = uncurry Guard $ head guards
+      grid = Array.array bounds ((coordinates, Empty) : cells)
 
-symbol :: Text -> Parser Text
-symbol = Lexer.symbol hspace
+move :: Guard -> Guard
+move (Guard (x, y) dir) = case dir of
+  North -> Guard (x, y -1) dir
+  East -> Guard (x + 1, y) dir
+  South -> Guard (x, y + 1) dir
+  West -> Guard (x - 1, y) dir
 
-parseObstacle :: Parser Obstacle
-parseObstacle = do
-  loc <- getSourcePos
-  void $ char '#'
-  return $ Obstacle $ Coord (XCoord $ unPos $ sourceColumn loc, YCoord $ unPos $ sourceLine loc)
+isInBounds :: Coord -> Grid -> Bool
+isInBounds (x, y) grid = x >= 0 && y >= 0 && x <= xMax && y <= yMax
+  where (xMax, yMax) = snd $ Array.bounds grid
 
-parseGuard :: Parser Guard
-parseGuard = do
-  loc <- getSourcePos
-  dir <- parseDirection
-  let coords =  Coord (XCoord $ unPos $ sourceColumn loc, YCoord $ unPos $ sourceLine loc)
-  return $ Guard coords dir
+route :: Grid -> Guard -> (Route, Bool)
+route = route' Set.empty False
 
-parseDirection :: Parser Direction
-parseDirection = choice
-  [ North <$ char '^'
-  , South <$ char 'v'
-  , West <$ char '<'
-  , East <$ char '>'
-  ]
-
-parseCell :: Parser (Maybe (Either Guard Obstacle))
-parseCell = choice
-  [ Just . Left <$> parseGuard
-  , Just . Right <$> parseObstacle
-  , Nothing <$ char '.'
-  ]
-
-parseInput :: Parser Input
-parseInput = do
-  rows <- some (some parseCell <* optional newline)
-  let cells = concat rows
-  let (guards, obstacles) = partitionEithers . catMaybes $ cells
-  return $ Input (head guards) obstacles
-
-runParserInput :: Text -> Either (ParseErrorBundle Text Void) Input
-runParserInput = parse parseInput ""
-
-move :: Guard -> [Obstacle] -> (Int, Int)  -> [Coord] -> [Coord]
-move (Guard c@(Coord c'@(XCoord x, YCoord y)) dir) obstacles limits@(y',x') acc =
-  case dir of
-    North    | y == 1 -> acc
-    East | x == x' -> acc
-    South  | y == y' -> acc
-    West  | x == 1 -> acc
-    _ -> case nextPos of
-           pos | (Obstacle pos) `elem` obstacles -> move (Guard c nextDir) obstacles limits (c : acc)
-               | otherwise -> move (Guard pos dir) obstacles limits (pos : acc)
+route' :: Route -> Bool -> Grid -> Guard -> (Route, Bool)
+route' r isCycle grid guard@(Guard _coordinates _direction)
+  | isCycle = (r, isCycle)
+  | not $ isInBounds coordinates' grid = (r, isCycle)
+  | Empty <- grid ! coordinates' = route' (Set.insert guard' r) (Set.member guard' r) grid guard'
+  | otherwise = route' (Set.insert guard'' r) (Set.member guard'' r) grid guard''
   where
-    nextPos = case dir of
-      North   -> Coord (XCoord x, YCoord $ y-1)
-      East -> Coord (XCoord $ x+1, YCoord y)
-      South  -> Coord (XCoord x, YCoord $ y+1)
-      West  -> Coord (XCoord $ x-1, YCoord y)
+    guard'@(Guard coordinates' _) = move guard
+    guard'' = turn guard
 
-    nextDir = case dir of
-      North    -> East
-      East -> South
-      South  -> West
-      West  -> North
 
-part1' :: Input -> (Int, Int) -> [Coord]
-part1' inp lim =
-  let
-    guard' :: Guard = guard inp
-  in
-  move (guard inp) (obstacles inp) lim [coords guard']
-
-part1 :: Input -> (Int, Int) -> Int
-part1 inp lim = length $ nub $ part1' inp lim
-
--- | Predicate for paths that loop instead of running off the edge of the map.
--- <https://en.wikipedia.org/wiki/Cycle_detection#Floyd's_tortoise_and_hare>
-isLoop :: Eq a => [a] -> Bool
-isLoop [] = False
-isLoop xs = go xs xs
+part1 :: Text -> Int
+part1 input =
+  length $ Set.insert coord $ Set.map (\(Guard coordinates _) -> coordinates) r
   where
-    go (y:ys) (_:z:zs) = y == z || go ys zs
-    go _ _ = False
+    o@(_, Guard coord _ ) = parseInput input
+    r = fst $ uncurry route o
 
-part2 :: Input -> (Int, Int) -> IO ()
-part2 inp lim =
-  let
-      guard'@(Guard c _) :: Guard = guard inp
-      visited :: [Coord] = part1' inp lim
-      obstacles' :: [Obstacle] = obstacles inp
-      positions = filter (c /=) visited
-      attempt p = move guard' ((Obstacle p) : obstacles') lim [c]
-      check = isLoop . attempt
-  in
-    do
-      print $ length positions
-      print $ check $ reverse positions !! 1
---      print $ take 1 $ filter check $ reverse positions
-
+part2 :: Text -> IO Int
+part2 input = do
+  let (grid, guard@(Guard guardCoord _)) = parseInput  input
+      coords = Set.filter (/= guardCoord) $ Set.map (\(Guard coord _) -> coord) $ fst $ route grid guard
+      doesCreateCycle coord = pure $ snd $ route (grid // [(coord, Obstacle)]) guard
+  xs <- mapConcurrently doesCreateCycle $ Set.elems coords
+  return $ length $ filter id  xs
 
 solve :: IO ()
 solve = do
---  rawInput <- Utils.getPuzzleInput 2024 6
-  let rawInput = sample
-  let rawInput' = Text.lines rawInput
-  let result = runParserInput rawInput
-  case result of
-    Left err -> print err
-    Right input -> do
-      print $ guard input
-      let solution1 = part1 input (length $ rawInput', Text.length $ rawInput' !! 0)
-      print solution1
-      part2 input (length $ rawInput', Text.length $ rawInput' !! 0)
+  rawInput <- Utils.getPuzzleInput 2024 6
+  print $ part1 rawInput
+  solution <- part2 rawInput
+  print $ solution
