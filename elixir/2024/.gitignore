@@ -21,3 +21,6 @@ aoc_2024-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+.dir-locals.el
+.project
+.dir-locals.el
