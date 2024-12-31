@@ -32,10 +32,69 @@
 	    ghcid
 	    cabal-install
 	    haskell-language-server
+	    fourmolu
 	  ];
 
-	  shellHook = ''
+	  shellHook =	  let
+	    project = pkgs.writeTextFile {
+	      name = ".project";
+	      text = ''
+((nil . ((project-root . default-directory))))
+		'';
+	    };
+	    dir-locals = pkgs.writeTextFile {
+	      name = ".dir-locals.el";
+	      text = ''
+((haskell-ts-mode
+  ;; Basic haskell-ts-mode settings
+  (haskell-formatter . "fourmolu")  ; or "ormolu", "brittany", "floskell"
+  (haskell-process-type . "cabal-repl")
+  (haskell-compile-command . "cabal build")
+  
+  ;; Eglot settings
+  (eglot-workspace-configuration
+   . (:haskell (:checkProject t
+                :formattingProvider "fourmolu"
+                :maxCompletions 40
+                :plugin (:eval-global :on))))
+  
+  ;; Cabal specific settings
+  (haskell-cabal-dir . (locate-dominating-file default-directory "advent-of-code.cabal"))
+  
+  
+  ;; Project-specific GHC options
+  (haskell-ghc-options . ("-Wall"
+                         "-Wcompat"
+                         "-Widentities"
+                         "-Wincomplete-record-updates"
+                         "-Wincomplete-uni-patterns"
+                         "-Wmissing-export-lists"
+                         "-Wmissing-home-modules"
+                         "-Wpartial-fields"
+                         "-Wredundant-constraints"))
+  
+  ;; Optional: Directory-specific settings
+  (eval . (set (make-local-variable 'compile-command)
+               (let ((cabal-dir (locate-dominating-file default-directory "advent-of-code.cabal")))
+                 (if cabal-dir
+                     (format "cd %s && cabal build" cabal-dir)
+                   "cabal build"))))
+  
+  ;; Optional: HLS settings via eglot
+  (eglot-sync-connect . 1)
+  (eglot-autoshutdown . t))
+
+ ;; Settings for cabal-mode files
+ (cabal-mode
+  (tab-width . 2)
+  (fill-column . 80)))		
+	      '';
+	    };
+	  in
+	  ''
 	  gen-hie > hie.yaml
+          cat ${project} > .project
+	  cat ${dir-locals} > .dir-locals.el
 	  '';
 	};
       }
