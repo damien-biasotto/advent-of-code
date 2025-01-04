@@ -53,7 +53,6 @@ defmodule Aoc2024.Day6 do
     visited = trace_path(grid, start, :n, MapSet.new())
     targets = MapSet.delete(visited, start)
 
-   IO.inspect targets
     {row_blocks, col_blocks} = get_block_maps(lines)
 
     Task.async_stream(Enum.chunk_every(targets, 1000), fn targets_chunk ->
@@ -118,9 +117,7 @@ defmodule Aoc2024.Day6 do
       |> List.flatten()
 
     row_blocks = Enum.group_by(block_positions, fn {i, _} -> i end, fn {_, j} -> j end)
-    IO.inspect(row_blocks, label: "row_blocks")
     col_blocks = Enum.group_by(block_positions, fn {_, j} -> j end, fn {i, _} -> i end)
-    IO.inspect(col_blocks, label: "col_blocks")
     {row_blocks, col_blocks}
   end
 

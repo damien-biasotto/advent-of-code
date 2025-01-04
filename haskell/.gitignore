@@ -2,3 +2,4 @@
 result
 hie.yaml
 .project
+.dir-locals.el

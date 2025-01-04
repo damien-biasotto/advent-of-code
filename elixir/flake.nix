@@ -12,7 +12,7 @@
       pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
     in {
       devShell = pkgs.mkShell {
-	buildInputs = with pkgs; [elixir elixir-ls];
+	buildInputs = with pkgs; [elixir elixir-ls git];
 	shellHook =
 	  let
 	    project = pkgs.writeTextFile {
